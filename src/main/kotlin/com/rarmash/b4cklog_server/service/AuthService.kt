@@ -62,6 +62,14 @@ class AuthService(
         return RegisterResponse(tokenString)
     }
 
+    fun checkAdmin(tokenString: String): User {
+        val user = getUserByToken(tokenString)
+        if (!user.isAdmin) {
+            throw ResponseStatusException(HttpStatus.FORBIDDEN, "Требуются права администратора")
+        }
+        return user
+    }
+
     fun getUserByToken(tokenString: String): User {
         val token = tokenRepository.findByToken(tokenString)
             ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Недействительный токен")

@@ -12,6 +12,5 @@ data class Platform(
     val id: Int = 0,
 
     var name: String,
-    var abbreviation: String = "",
-    var releaseDate: String = "",
+    var releaseDate: String = ""
 )

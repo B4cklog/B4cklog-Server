@@ -2,11 +2,8 @@ package com.rarmash.b4cklog_server.controller
 
 import com.rarmash.b4cklog_server.model.game.Game
 import com.rarmash.b4cklog_server.model.game.GameDAO
-import com.rarmash.b4cklog_server.model.user.User
 import com.rarmash.b4cklog_server.service.AuthService
-import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
-import org.springframework.web.server.ResponseStatusException
 import java.util.*
 
 @RestController
@@ -15,21 +12,13 @@ class GameController (
     private val gameDAO: GameDAO,
     private val authService: AuthService
 ) {
-    private fun checkAdmin(tokenString: String): User {
-        val user = authService.getUserByToken(tokenString)
-        if (!user.isAdmin) {
-            throw ResponseStatusException(HttpStatus.FORBIDDEN, "Требуются права администратора")
-        }
-        return user
-    }
-
-    @GetMapping("/add")
+    @PostMapping("/add")
     fun addGame(
         @RequestHeader("Authorization") authHeader: String,
         @RequestBody game: Game
     ): Game {
         val token = authHeader.removePrefix("Bearer ").trim()
-        checkAdmin(token)
+        authService.checkAdmin(token)
         return gameDAO.addGame(game)
     }
 
@@ -43,13 +32,13 @@ class GameController (
         return gameDAO.getAllGames()
     }
 
-    @GetMapping("/delete/{id}")
+    @DeleteMapping("/delete/{id}")
     fun deleteGame(
         @RequestHeader("Authorization") authHeader: String,
         @PathVariable("id") id: Int
     ) {
         val token = authHeader.removePrefix("Bearer ").trim()
-        checkAdmin(token)
+        authService.checkAdmin(token)
         return gameDAO.deleteGame(id = id)
     }
 

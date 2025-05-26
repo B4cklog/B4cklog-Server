@@ -2,14 +2,23 @@ package com.rarmash.b4cklog_server.controller
 
 import com.rarmash.b4cklog_server.model.platform.Platform
 import com.rarmash.b4cklog_server.model.platform.PlatformDAO
+import com.rarmash.b4cklog_server.service.AuthService
 import org.springframework.web.bind.annotation.*
 import java.util.*
 
 @RestController
-@RequestMapping("/plaforms")
-class PlatformController (private val platformDAO: PlatformDAO) {
-    @GetMapping("/add")
-    fun addPlatform(@RequestBody platform: Platform): Platform {
+@RequestMapping("/platforms")
+class PlatformController (
+    private val platformDAO: PlatformDAO,
+    private val authService: AuthService
+) {
+    @PostMapping("/add")
+    fun addPlatform(
+        @RequestHeader("Authorization") authHeader: String,
+        @RequestBody platform: Platform,
+    ): Platform {
+        val token = authHeader.removePrefix("Bearer ").trim()
+        authService.checkAdmin(token)
         return platformDAO.addPlatform(platform)
     }
 
@@ -23,8 +32,13 @@ class PlatformController (private val platformDAO: PlatformDAO) {
         return platformDAO.getAllPlatforms()
     }
 
-    @GetMapping("/delete/{id}")
-    fun deletePlatform(@PathVariable("id") id: Int) {
+    @DeleteMapping("/delete/{id}")
+    fun deletePlatform(
+        @RequestHeader("Authorization") authHeader: String,
+        @PathVariable("id") id: Int
+    ) {
+        val token = authHeader.removePrefix("Bearer ").trim()
+        authService.checkAdmin(token)
         return platformDAO.deletePlatform(id = id)
     }
 }
