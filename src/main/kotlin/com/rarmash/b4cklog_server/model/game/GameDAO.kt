@@ -1,12 +1,22 @@
 package com.rarmash.b4cklog_server.model.game
 
+import com.rarmash.b4cklog_server.model.platform.PlatformRepository
 import org.springframework.stereotype.Service
 
 @Service
 class GameDAO (
-    private val repository: GameRepository
+    private val repository: GameRepository,
+    private val platformRepository: PlatformRepository
 ){
-    fun addGame(game: Game) = repository.save(game)
+    fun addGame(game: Game): Game {
+        val resolvedPlatforms = game.platforms.mapNotNull { partial ->
+            platformRepository.findById(partial.id).orElse(null)
+        }.toMutableList()
+
+        val gameToSave = game.copy(platforms = resolvedPlatforms)
+
+        return repository.save(gameToSave)
+    }
 
     fun getGame(id: Int) = repository.findById(id)
 

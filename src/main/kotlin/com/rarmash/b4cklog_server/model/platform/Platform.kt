@@ -11,6 +11,6 @@ data class Platform(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Int = 0,
 
-    var name: String,
+    var name: String = "",
     var releaseDate: String = ""
 )
