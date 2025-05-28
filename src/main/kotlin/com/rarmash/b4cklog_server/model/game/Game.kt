@@ -10,6 +10,7 @@ data class Game(
     val id: Int = 0,
 
     var name: String,
+    @Column(columnDefinition = "TEXT")
     var summary: String = "",
     var cover: String = "",
     var releaseDate: String = "",

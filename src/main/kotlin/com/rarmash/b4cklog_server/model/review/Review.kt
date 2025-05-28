@@ -15,5 +15,6 @@ data class Review(
     @ManyToOne
     val user: User,
     val rating: Int,  // от 1 до 10
+    @Column(columnDefinition = "TEXT")
     val comment: String? = null
 )
