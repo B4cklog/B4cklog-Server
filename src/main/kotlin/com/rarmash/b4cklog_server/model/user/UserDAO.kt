@@ -1,6 +1,7 @@
 package com.rarmash.b4cklog_server.model.user
 
 import com.rarmash.b4cklog_server.model.game.Game
+import com.rarmash.b4cklog_server.util.HashUtils
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
@@ -60,4 +61,23 @@ class UserDAO(
 
         repository.save(user)
     }
+
+    fun updateEmail(userId: Int, newEmail: String) {
+        val user = getUser(userId).orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Пользователь не найден") }
+
+        if (repository.findByEmail(newEmail) != null) {
+            throw ResponseStatusException(HttpStatus.CONFLICT, "Этот email уже используется")
+        }
+
+        user.email = newEmail
+        saveUser(user)
+    }
+
+    fun updatePassword(userId: Int, newPassword: String) {
+        val user = getUser(userId).orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Пользователь не найден") }
+
+        user.password = HashUtils.sha256(newPassword)
+        saveUser(user)
+    }
+
 }

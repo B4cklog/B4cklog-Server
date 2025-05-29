@@ -43,4 +43,26 @@ class UserController(
             .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Игра не найдена") }
         userDAO.removeGameFromAllLists(userId, game)
     }
+
+    @PatchMapping("/updateEmail")
+    fun updateEmail(
+        @RequestHeader("Authorization") authHeader: String,
+        @RequestParam newEmail: String
+    ) {
+        val token = authHeader.removePrefix("Bearer ").trim()
+        val user = authService.getUserByToken(token)
+
+        userDAO.updateEmail(user.id, newEmail)
+    }
+
+    @PatchMapping("/updatePassword")
+    fun updatePassword(
+        @RequestHeader("Authorization") authHeader: String,
+        @RequestParam newPassword: String
+    ) {
+        val token = authHeader.removePrefix("Bearer ").trim()
+        val user = authService.getUserByToken(token)
+
+        userDAO.updatePassword(user.id, newPassword)
+    }
 }
