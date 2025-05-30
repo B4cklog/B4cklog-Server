@@ -29,6 +29,8 @@ dependencies {
 	implementation("io.github.cdimascio:java-dotenv:3.1.7")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
+	testImplementation("org.mockito.kotlin:mockito-kotlin:4.1.0")
+	testImplementation("io.mockk:mockk:1.13.4")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

@@ -18,6 +18,19 @@ class GameDAO (
         return repository.save(gameToSave)
     }
 
+    fun updateGame(updatedGame: Game): Game {
+        val existing = repository.findById(updatedGame.id)
+            .orElseThrow { NoSuchElementException("Игра с id ${updatedGame.id} не найдена") }
+
+        existing.name = updatedGame.name
+        existing.summary = updatedGame.summary
+        existing.cover = updatedGame.cover
+        existing.releaseDate = updatedGame.releaseDate
+        existing.platforms = updatedGame.platforms
+
+        return repository.save(existing)
+    }
+
     fun getGame(id: Int) = repository.findById(id)
 
     fun getAllGames() = repository.findAll().toList()

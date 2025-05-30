@@ -46,4 +46,14 @@ class GameController (
     fun searchGames(@RequestParam("q") query: String): List<Game> {
         return gameDAO.searchGamesByName(query)
     }
+
+    @PostMapping("/update")
+    fun updateGame(
+        @RequestHeader("Authorization") authHeader: String,
+        @RequestBody game: Game
+    ): Game {
+        val token = authHeader.removePrefix("Bearer ").trim()
+        authService.checkAdmin(token)
+        return gameDAO.updateGame(game)
+    }
 }

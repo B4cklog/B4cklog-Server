@@ -14,7 +14,7 @@ data class Review(
     val game: Game,
     @ManyToOne
     val user: User,
-    val rating: Int,  // от 1 до 10
+    val rating: Int,  // от 1 до 5
     @Column(columnDefinition = "TEXT")
-    val comment: String? = null
+        val comment: String? = null
 )

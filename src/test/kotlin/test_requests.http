@@ -1,0 +1,68 @@
+### 1. Регистрация пользователя
+POST http://localhost:8080/auth/register
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "email": "test@example.com",
+  "password": "123456",
+  "firstName": "Test",
+  "lastName": "User",
+  "age": 20
+}
+
+### 2. Логин
+POST http://localhost:8080/auth/login
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "password": "123456"
+}
+
+### 3. Добавление игры (админ)
+@admin_token = 4d677f49-dee2-46e3-acba-33760fc07e69
+POST http://localhost:8080/games/add
+Authorization: Bearer {{admin_token}}
+Content-Type: application/json
+
+{
+  "name": "Test Game",
+  "summary": "Cool test game",
+  "cover": "https://example.com/image.png",
+  "releaseDate": "2025-05-30",
+  "platforms": []
+}
+
+### 4. Получение всех игр
+GET http://localhost:8080/games/get/all
+
+### 5. Поиск игры
+GET http://localhost:8080/games/search?q=Test
+
+### 6. Добавление платформы
+POST http://localhost:8080/platforms/add
+Authorization: Bearer {{admin_token}}
+Content-Type: application/json
+
+{
+  "name": "Steam"
+}
+
+### 7. Получение профиля
+@user_token = 4d677f49-dee2-46e3-acba-33760fc07e69
+GET http://localhost:8080/users/profile
+Authorization: Bearer {{user_token}}
+
+### 8. Добавление игры в список
+@userId = 1
+POST http://localhost:8080/users/{{userId}}/addGameToList?gameId=1&listName=backlogWantToPlay
+Authorization: Bearer {{user_token}}
+
+### 9. Удаление игры из всех списков
+DELETE http://localhost:8080/users/{{userId}}/removeGameFromAllLists?gameId=1
+Authorization: Bearer {{user_token}}
+
+### 10. Обновление email
+PATCH http://localhost:8080/users/updateEmail?newEmail=new@example.com
+Authorization: Bearer {{user_token}}
