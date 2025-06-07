@@ -27,6 +27,7 @@ dependencies {
 	implementation("mysql:mysql-connector-java:8.0.33")
 	implementation("org.springframework.boot:spring-boot-starter-security")
 	implementation("io.github.cdimascio:java-dotenv:3.1.7")
+	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.5")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
 	testImplementation("org.mockito.kotlin:mockito-kotlin:4.1.0")

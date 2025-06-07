@@ -13,6 +13,7 @@ fun main(args: Array<String>) {
 	System.setProperty("DB_URL", dotenv["DB_URL"])
 	System.setProperty("DB_USERNAME", dotenv["DB_USERNAME"])
 	System.setProperty("DB_PASSWORD", dotenv["DB_PASSWORD"])
+	System.setProperty("FRONTEND_URL", dotenv["FRONTEND_URL"])
 
 	runApplication<B4cklogServerApplication>(*args)
 }
