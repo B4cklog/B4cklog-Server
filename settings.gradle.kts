@@ -1,1 +1,1 @@
-rootProject.name = "b4cklog_server"
+rootProject.name = "server"
