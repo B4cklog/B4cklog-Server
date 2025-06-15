@@ -56,4 +56,14 @@ class GameController (
         authService.checkAdmin(token)
         return gameDAO.updateGame(game)
     }
+
+    @GetMapping("/latest")
+    fun getLatestGames(): List<Game> {
+        return gameDAO.getLatestGames()
+    }
+
+    @GetMapping("/popular")
+    fun getPopularGames(): List<Game> {
+        return gameDAO.getPopularGames()
+    }
 }

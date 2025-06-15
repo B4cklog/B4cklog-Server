@@ -38,4 +38,8 @@ class GameDAO (
     fun deleteGame(id: Int) = repository.deleteById(id)
 
     fun searchGamesByName(namePart: String) = repository.findByNameContainingIgnoreCase(namePart)
+
+    fun getLatestGames() = repository.findLatestGames()
+
+    fun getPopularGames() = repository.findPopularGames()
 }
