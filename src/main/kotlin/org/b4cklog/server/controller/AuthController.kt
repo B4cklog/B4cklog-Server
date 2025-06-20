@@ -26,6 +26,20 @@ class AuthController(
         return ResponseEntity.ok(response)
     }
 
+    @PostMapping("/refresh")
+    fun refresh(@RequestBody body: Map<String, String>): ResponseEntity<LoginResponse> {
+        val refreshToken = body["refreshToken"] ?: return ResponseEntity.badRequest().build()
+        val response = authService.refreshToken(refreshToken)
+        return ResponseEntity.ok(response)
+    }
+
+    @PostMapping("/logout")
+    fun logout(@RequestBody body: Map<String, String>): ResponseEntity<Void> {
+        val refreshToken = body["refreshToken"] ?: return ResponseEntity.badRequest().build()
+        authService.logout(refreshToken)
+        return ResponseEntity.ok().build()
+    }
+
     @ExceptionHandler(ResponseStatusException::class)
     fun handleResponseStatusException(ex: ResponseStatusException): ResponseEntity<Map<String, String>> {
         val body = mapOf("error" to (ex.reason ?: "Error"))

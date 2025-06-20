@@ -8,17 +8,18 @@ import org.b4cklog.server.model.token.*
 import org.b4cklog.server.model.user.User
 import org.b4cklog.server.model.user.UserRepository
 import org.b4cklog.server.util.HashUtils
+import org.b4cklog.server.util.JwtUtils
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
-import java.util.*
+import org.springframework.transaction.annotation.Transactional
 
 @Service
 class AuthService(
     private val userRepository: UserRepository,
-    private val tokenRepository: TokenRepository
+    private val refreshTokenRepository: RefreshTokenRepository
 ) {
-
+    @Transactional
     fun login(request: LoginRequest): LoginResponse {
         val user = userRepository.findByUsername(request.username)
             ?: throw ResponseStatusException(HttpStatus.BAD_REQUEST, "User not found")
@@ -28,13 +29,16 @@ class AuthService(
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid password")
         }
 
-        val tokenString = UUID.randomUUID().toString()
-        val token = Token(user = user, token = tokenString)
-        tokenRepository.save(token)
+        val accessToken = JwtUtils.generateAccessToken(user.id, user.username)
+        val refreshToken = JwtUtils.generateRefreshToken(user.id)
+        val expiry = JwtUtils.getRefreshTokenExpiry(refreshToken)
+        refreshTokenRepository.deleteByUser(user)
+        refreshTokenRepository.save(RefreshToken(token = refreshToken, user = user, expiryDate = expiry))
 
-        return LoginResponse(tokenString)
+        return LoginResponse(accessToken, refreshToken)
     }
 
+    @Transactional
     fun register(request: RegisterRequest): RegisterResponse {
         if (userRepository.findByUsername(request.username) != null) {
             throw ResponseStatusException(HttpStatus.CONFLICT, "Username already taken")
@@ -55,11 +59,26 @@ class AuthService(
 
         val savedUser = userRepository.save(user)
 
-        val tokenString = UUID.randomUUID().toString()
-        val token = Token(user = savedUser, token = tokenString)
-        tokenRepository.save(token)
+        val accessToken = JwtUtils.generateAccessToken(savedUser.id, savedUser.username)
+        val refreshToken = JwtUtils.generateRefreshToken(savedUser.id)
+        val expiry = JwtUtils.getRefreshTokenExpiry(refreshToken)
+        refreshTokenRepository.deleteByUser(savedUser)
+        refreshTokenRepository.save(RefreshToken(token = refreshToken, user = savedUser, expiryDate = expiry))
 
-        return RegisterResponse(tokenString)
+        return RegisterResponse(accessToken, refreshToken)
+    }
+
+    fun refreshToken(refreshToken: String): LoginResponse {
+        val userId = JwtUtils.getUserIdFromToken(refreshToken)?.toInt()
+            ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid refresh token")
+        val tokenEntity = refreshTokenRepository.findByToken(refreshToken)
+            ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired refresh token")
+        if (!JwtUtils.validateToken(refreshToken) || tokenEntity.user.id != userId) {
+            throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired refresh token")
+        }
+        val user = tokenEntity.user
+        val newAccessToken = JwtUtils.generateAccessToken(user.id, user.username)
+        return LoginResponse(newAccessToken, refreshToken)
     }
 
     fun checkAdmin(tokenString: String): User {
@@ -71,8 +90,18 @@ class AuthService(
     }
 
     fun getUserByToken(tokenString: String): User {
-        val token = tokenRepository.findByToken(tokenString)
+        // access_token теперь JWT
+        val userId = JwtUtils.getUserIdFromToken(tokenString)?.toInt()
             ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Недействительный токен")
-        return token.user
+        return userRepository.findById(userId).orElseThrow {
+            ResponseStatusException(HttpStatus.UNAUTHORIZED, "Пользователь не найден")
+        }
+    }
+
+    fun logout(refreshToken: String) {
+        val tokenEntity = refreshTokenRepository.findByToken(refreshToken)
+        if (tokenEntity != null) {
+            refreshTokenRepository.delete(tokenEntity)
+        }
     }
 }
