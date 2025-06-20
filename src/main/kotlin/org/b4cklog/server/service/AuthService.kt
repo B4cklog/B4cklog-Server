@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
 import org.springframework.transaction.annotation.Transactional
+import java.util.UUID
 
 @Service
 class AuthService(
@@ -32,10 +33,10 @@ class AuthService(
         val accessToken = JwtUtils.generateAccessToken(user.id, user.username)
         val refreshToken = JwtUtils.generateRefreshToken(user.id)
         val expiry = JwtUtils.getRefreshTokenExpiry(refreshToken)
-        refreshTokenRepository.deleteByUser(user)
-        refreshTokenRepository.save(RefreshToken(token = refreshToken, user = user, expiryDate = expiry))
+        val sessionId = UUID.randomUUID().toString()
+        refreshTokenRepository.save(RefreshToken(token = refreshToken, user = user, expiryDate = expiry, sessionId = sessionId))
 
-        return LoginResponse(accessToken, refreshToken)
+        return LoginResponse(accessToken, refreshToken, sessionId)
     }
 
     @Transactional
@@ -62,23 +63,23 @@ class AuthService(
         val accessToken = JwtUtils.generateAccessToken(savedUser.id, savedUser.username)
         val refreshToken = JwtUtils.generateRefreshToken(savedUser.id)
         val expiry = JwtUtils.getRefreshTokenExpiry(refreshToken)
-        refreshTokenRepository.deleteByUser(savedUser)
-        refreshTokenRepository.save(RefreshToken(token = refreshToken, user = savedUser, expiryDate = expiry))
+        val sessionId = UUID.randomUUID().toString()
+        refreshTokenRepository.save(RefreshToken(token = refreshToken, user = savedUser, expiryDate = expiry, sessionId = sessionId))
 
-        return RegisterResponse(accessToken, refreshToken)
+        return RegisterResponse(accessToken, refreshToken, sessionId)
     }
 
-    fun refreshToken(refreshToken: String): LoginResponse {
+    fun refreshToken(refreshToken: String, sessionId: String): LoginResponse {
         val userId = JwtUtils.getUserIdFromToken(refreshToken)?.toInt()
             ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid refresh token")
-        val tokenEntity = refreshTokenRepository.findByToken(refreshToken)
+        val tokenEntity = refreshTokenRepository.findByTokenAndSessionId(refreshToken, sessionId)
             ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired refresh token")
         if (!JwtUtils.validateToken(refreshToken) || tokenEntity.user.id != userId) {
             throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired refresh token")
         }
         val user = tokenEntity.user
         val newAccessToken = JwtUtils.generateAccessToken(user.id, user.username)
-        return LoginResponse(newAccessToken, refreshToken)
+        return LoginResponse(newAccessToken, refreshToken, sessionId)
     }
 
     fun checkAdmin(tokenString: String): User {
@@ -98,10 +99,7 @@ class AuthService(
         }
     }
 
-    fun logout(refreshToken: String) {
-        val tokenEntity = refreshTokenRepository.findByToken(refreshToken)
-        if (tokenEntity != null) {
-            refreshTokenRepository.delete(tokenEntity)
-        }
+    fun logout(refreshToken: String, sessionId: String) {
+        refreshTokenRepository.deleteByTokenAndSessionId(refreshToken, sessionId)
     }
 }

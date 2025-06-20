@@ -29,14 +29,16 @@ class AuthController(
     @PostMapping("/refresh")
     fun refresh(@RequestBody body: Map<String, String>): ResponseEntity<LoginResponse> {
         val refreshToken = body["refreshToken"] ?: return ResponseEntity.badRequest().build()
-        val response = authService.refreshToken(refreshToken)
+        val sessionId = body["sessionId"] ?: return ResponseEntity.badRequest().build()
+        val response = authService.refreshToken(refreshToken, sessionId)
         return ResponseEntity.ok(response)
     }
 
     @PostMapping("/logout")
     fun logout(@RequestBody body: Map<String, String>): ResponseEntity<Void> {
         val refreshToken = body["refreshToken"] ?: return ResponseEntity.badRequest().build()
-        authService.logout(refreshToken)
+        val sessionId = body["sessionId"] ?: return ResponseEntity.badRequest().build()
+        authService.logout(refreshToken, sessionId)
         return ResponseEntity.ok().build()
     }
 

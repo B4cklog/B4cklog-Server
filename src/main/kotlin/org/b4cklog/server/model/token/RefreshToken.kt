@@ -17,5 +17,8 @@ data class RefreshToken(
     val user: User,
 
     @Column(nullable = false)
-    val expiryDate: Date
+    val expiryDate: Date,
+
+    @Column(nullable = false)
+    val sessionId: String
 ) 
