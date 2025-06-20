@@ -1,19 +1,18 @@
 package org.b4cklog.server.model.game
 
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.CrudRepository
-import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
+import org.springframework.transaction.annotation.Transactional
 
 @Repository
 interface GameRepository : CrudRepository<Game, Int> {
-    @Query("SELECT g FROM Game g WHERE LOWER(g.name) LIKE LOWER(CONCAT('%', :namePart, '%'))")
-    fun findByNameContainingIgnoreCase(@Param("namePart") namePart: String): List<Game>
-
-    @Query("SELECT g FROM Game g ORDER BY g.releaseDate DESC LIMIT 10")
-    fun findLatestGames(): List<Game>
-
-    // TODO: change to popularity
-    @Query("SELECT g FROM Game g ORDER BY g.id DESC LIMIT 10")
-    fun findPopularGames(): List<Game>
-}
+    fun findByUserIdAndListType(userId: Int, listType: GameListType): List<Game>
+    fun findByUserIdAndGameId(userId: Int, gameId: Int): List<Game>
+    
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM Game g WHERE g.user.id = :userId AND g.gameId = :gameId")
+    fun deleteByUserIdAndGameId(userId: Int, gameId: Int)
+} 

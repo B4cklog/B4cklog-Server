@@ -1,6 +1,5 @@
 package org.b4cklog.server.model.review
 
-import org.b4cklog.server.model.game.Game
 import org.b4cklog.server.model.user.User
 import org.springframework.stereotype.Service
 
@@ -23,7 +22,7 @@ class ReviewDAO(private val repository: ReviewRepository) {
         val existing = repository.findByUserIdAndGameId(userId, gameId)
 
         val review = existing?.copy(rating = rating, comment = comment)
-            ?: Review(user = User(id = userId), game = Game(id = gameId), rating = rating, comment = comment)
+            ?: Review(user = User(id = userId), gameId = gameId, rating = rating, comment = comment)
 
         repository.save(review)
     }

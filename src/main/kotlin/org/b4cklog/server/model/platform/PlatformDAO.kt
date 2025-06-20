@@ -1,7 +1,5 @@
 package org.b4cklog.server.model.platform
 
-import org.b4cklog.server.model.game.Game
-import org.b4cklog.server.model.game.GameRepository
 import org.springframework.stereotype.Service
 
 @Service

@@ -9,7 +9,7 @@ interface ReviewRepository : CrudRepository<Review, Int> {
 
     fun findAllByGameId(gameId: Int): List<Review>
 
-    @Query("SELECT AVG(r.rating) FROM Review r WHERE r.game.id = :gameId")
+    @Query("SELECT AVG(r.rating) FROM Review r WHERE r.gameId = :gameId")
     fun findAverageRatingByGameId(gameId: Int): Double?
 
     fun findByUserIdAndGameId(userId: Int, gameId: Int): Review?

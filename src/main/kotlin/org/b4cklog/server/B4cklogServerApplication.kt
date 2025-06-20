@@ -14,6 +14,8 @@ fun main(args: Array<String>) {
 	System.setProperty("DB_USERNAME", dotenv["DB_USERNAME"])
 	System.setProperty("DB_PASSWORD", dotenv["DB_PASSWORD"])
 	System.setProperty("FRONTEND_URL", dotenv["FRONTEND_URL"])
+	System.setProperty("IGDB_CLIENT_ID", dotenv["IGDB_CLIENT_ID"])
+	System.setProperty("IGDB_CLIENT_SECRET", dotenv["IGDB_CLIENT_SECRET"])
 
 	runApplication<B4cklogServerApplication>(*args)
 }

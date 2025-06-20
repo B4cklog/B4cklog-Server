@@ -28,6 +28,11 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-security")
 	implementation("io.github.cdimascio:java-dotenv:3.1.7")
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.5")
+	implementation("org.springframework.boot:spring-boot-starter-webflux")
+	implementation("com.fasterxml.jackson.core:jackson-databind")
+	implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
+	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.7.3")
 	developmentOnly("org.springframework.boot:spring-boot-devtools")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
@@ -46,8 +51,4 @@ allOpen {
 	annotation("jakarta.persistence.Entity")
 	annotation("jakarta.persistence.MappedSuperclass")
 	annotation("jakarta.persistence.Embeddable")
-}
-
-tasks.withType<Test> {
-	useJUnitPlatform()
 }
