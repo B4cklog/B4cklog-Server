@@ -12,6 +12,8 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import org.b4cklog.server.dto.IGDBCover
+import org.b4cklog.server.dto.IGDBScreenshot
 
 @Service
 class IGDBService(
@@ -31,7 +33,7 @@ class IGDBService(
             
             val igdbQuery = """
                 search "${query}";
-                fields name,summary,cover.url,first_release_date,platforms.name;
+                fields name,summary,cover.url,first_release_date,platforms.name,genres.name,screenshots.url;
                 limit $limit;
             """.trimIndent()
             
@@ -50,7 +52,18 @@ class IGDBService(
                 logger.info("Found game: ${game.name} (ID: ${game.id})")
             }
             
-            return igdbGames
+            return igdbGames.map { game ->
+                game.copy(
+                    cover = game.cover?.let { 
+                        it.copy(url = if (it.url.startsWith("//")) 
+                            "https:${it.url}".replace("t_thumb", "t_cover_big") 
+                        else 
+                            it.url.replace("t_thumb", "t_cover_big")
+                        )
+                    },
+                    screenshots = game.screenshots?.map { s -> s.copy(url = if (s.url.startsWith("//")) "https:${s.url}" else s.url) }
+                )
+            }
         } catch (e: Exception) {
             logger.error("Error searching games: ${e.message}", e)
             return emptyList()
@@ -64,7 +77,7 @@ class IGDBService(
             
             val igdbQuery = """
                 where id = $id;
-                fields name,summary,cover.url,first_release_date,platforms.name;
+                fields name,summary,cover.url,first_release_date,platforms.name,genres.name,screenshots.url;
             """.trimIndent()
             
             val igdbGames: List<IGDBGame> = igdbWebClient.post()
@@ -76,7 +89,18 @@ class IGDBService(
                 .awaitBody()
             
             logger.info("Found ${igdbGames.size} games for ID $id")
-            return igdbGames.firstOrNull()
+            return igdbGames.firstOrNull()?.let { game ->
+                game.copy(
+                    cover = game.cover?.let { 
+                        it.copy(url = if (it.url.startsWith("//")) 
+                            "https:${it.url}".replace("t_thumb", "t_cover_big") 
+                        else 
+                            it.url.replace("t_thumb", "t_cover_big")
+                        )
+                    },
+                    screenshots = game.screenshots?.map { s -> s.copy(url = if (s.url.startsWith("//")) "https:${s.url}" else s.url) }
+                )
+            }
         } catch (e: Exception) {
             logger.error("Error getting game by ID $id: ${e.message}", e)
             return null
@@ -91,7 +115,7 @@ class IGDBService(
             val igdbQuery = """
                 where first_release_date != null & first_release_date < ${System.currentTimeMillis() / 1000};
                 sort first_release_date desc;
-                fields name,summary,cover.url,first_release_date,platforms.name;
+                fields name,summary,cover.url,first_release_date,platforms.name,genres.name,screenshots.url;
                 limit $limit;
             """.trimIndent()
             
@@ -104,7 +128,18 @@ class IGDBService(
                 .awaitBody()
             
             logger.info("Found ${igdbGames.size} latest games")
-            return igdbGames
+            return igdbGames.map { game ->
+                game.copy(
+                    cover = game.cover?.let { 
+                        it.copy(url = if (it.url.startsWith("//")) 
+                            "https:${it.url}".replace("t_thumb", "t_cover_big") 
+                        else 
+                            it.url.replace("t_thumb", "t_cover_big")
+                        )
+                    },
+                    screenshots = game.screenshots?.map { s -> s.copy(url = if (s.url.startsWith("//")) "https:${s.url}" else s.url) }
+                )
+            }
         } catch (e: Exception) {
             logger.error("Error getting latest games: ${e.message}", e)
             return emptyList()
@@ -119,7 +154,7 @@ class IGDBService(
             val igdbQuery = """
                 where rating_count > 100;
                 sort rating_count desc;
-                fields name,summary,cover.url,first_release_date,platforms.name;
+                fields name,summary,cover.url,first_release_date,platforms.name,genres.name,screenshots.url;
                 limit $limit;
             """.trimIndent()
             
@@ -132,7 +167,18 @@ class IGDBService(
                 .awaitBody()
             
             logger.info("Found ${igdbGames.size} popular games")
-            return igdbGames
+            return igdbGames.map { game ->
+                game.copy(
+                    cover = game.cover?.let { 
+                        it.copy(url = if (it.url.startsWith("//")) 
+                            "https:${it.url}".replace("t_thumb", "t_cover_big") 
+                        else 
+                            it.url.replace("t_thumb", "t_cover_big")
+                        )
+                    },
+                    screenshots = game.screenshots?.map { s -> s.copy(url = if (s.url.startsWith("//")) "https:${s.url}" else s.url) }
+                )
+            }
         } catch (e: Exception) {
             logger.error("Error getting popular games: ${e.message}", e)
             return emptyList()
@@ -145,7 +191,7 @@ class IGDBService(
             logger.info("Getting all games, limit: $limit")
             
             val igdbQuery = """
-                fields name,summary,cover.url,first_release_date,platforms.name;
+                fields name,summary,cover.url,first_release_date,platforms.name,genres.name,screenshots.url;
                 limit $limit;
             """.trimIndent()
             
@@ -158,7 +204,18 @@ class IGDBService(
                 .awaitBody()
             
             logger.info("Found ${igdbGames.size} games total")
-            return igdbGames
+            return igdbGames.map { game ->
+                game.copy(
+                    cover = game.cover?.let { 
+                        it.copy(url = if (it.url.startsWith("//")) 
+                            "https:${it.url}".replace("t_thumb", "t_cover_big") 
+                        else 
+                            it.url.replace("t_thumb", "t_cover_big")
+                        )
+                    },
+                    screenshots = game.screenshots?.map { s -> s.copy(url = if (s.url.startsWith("//")) "https:${s.url}" else s.url) }
+                )
+            }
         } catch (e: Exception) {
             logger.error("Error getting all games: ${e.message}", e)
             return emptyList()
