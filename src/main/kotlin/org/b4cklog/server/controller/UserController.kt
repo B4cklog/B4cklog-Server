@@ -239,4 +239,23 @@ class UserController(
         val user = authService.getUserByToken(token)
         userDAO.removeFriend(user.id, friendId)
     }
+
+    @GetMapping("/search")
+    fun searchUsers(
+        @RequestHeader("Authorization") authHeader: String,
+        @RequestParam query: String
+    ): List<FriendDto> {
+        val token = authHeader.removePrefix("Bearer ").trim()
+        val currentUser = authService.getUserByToken(token)
+
+        return userDAO.searchUsers(query, currentUser.id).map {
+            FriendDto(
+                id = it.id,
+                username = it.username,
+                firstName = it.firstName,
+                lastName = it.lastName
+            )
+        }
+    }
+
 }

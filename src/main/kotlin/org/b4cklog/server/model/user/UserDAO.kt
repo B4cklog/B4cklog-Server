@@ -150,4 +150,6 @@ class UserDAO(
     fun getSentFriendRequests(userId: Int): List<FriendRequest> {
         return friendRequestRepository.findBySenderIdAndStatus(userId, FriendRequestStatus.PENDING)
     }
+
+    fun searchUsers(query: String, currentUserId: Int): List<User> = repository.searchUsers(query, currentUserId)
 }
