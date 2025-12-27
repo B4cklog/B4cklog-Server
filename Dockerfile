@@ -1,9 +1,17 @@
 # Build stage
 FROM gradle:8.6-jdk21 AS build
 WORKDIR /app
+
+COPY build.gradle.kts settings.gradle.kts gradle.properties ./
+COPY gradle ./gradle
+
+RUN gradle help --no-daemon
+
+COPY src ./src
 COPY .env .env
-COPY . .
-RUN gradle build --no-daemon -x test
+
+RUN --mount=type=cache,target=/home/gradle/.gradle \
+    gradle bootJar --no-daemon -x test
 
 # Runtime stage
 FROM eclipse-temurin:21-jre-jammy
