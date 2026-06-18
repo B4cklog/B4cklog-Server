@@ -1,18 +1,12 @@
 package org.b4cklog.server.controller
 
-import org.b4cklog.server.dto.IGDBGame
-import org.b4cklog.server.dto.FriendRequestDto
-import org.b4cklog.server.dto.FriendDto
+import org.b4cklog.server.dto.*
 import org.b4cklog.server.model.game.GameListType
-import org.b4cklog.server.model.user.FriendRequestStatus
-import org.b4cklog.server.model.user.User
 import org.b4cklog.server.model.user.UserDAO
 import org.b4cklog.server.service.AuthService
 import org.b4cklog.server.service.IGDBService
-import org.springframework.http.HttpStatus
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.*
-import org.springframework.web.server.ResponseStatusException
 
 @RestController
 @RequestMapping("/users")
@@ -24,16 +18,16 @@ class UserController(
     @GetMapping("/profile")
     fun getUserProfile(
         @RequestHeader("Authorization") authHeader: String
-    ): User {
+    ): UserDto {
         val token = authHeader.removePrefix("Bearer ").trim()
         val user = authService.getUserByToken(token)
-        return user
+        return user.toUserDto(includePrivateFields = true)
     }
 
     @GetMapping("/profile/withGames")
     suspend fun getUserProfileWithGames(
         @RequestHeader("Authorization") authHeader: String
-    ): Map<String, Any> {
+    ): UserProfileResponse {
         val token = authHeader.removePrefix("Bearer ").trim()
         val user = authService.getUserByToken(token)
         
@@ -45,22 +39,19 @@ class UserController(
                 .filter { it.listType == listType }
                 .map { it.gameId }
             
-            val gameList = gameIds.mapNotNull { id ->
-                igdbService.getGameById(id)
+            val gameList = gameIds.mapNotNull { gameId ->
+                igdbService.getGameById(gameId)
             }
             games[listType.name.lowercase()] = gameList
         }
         
-        return mapOf(
-            "user" to user,
-            "games" to games
-        )
+        return UserProfileResponse(user.toUserDto(includePrivateFields = true), games)
     }
 
     @GetMapping("/{id}/profile/withGames")
     suspend fun getUserProfileWithGamesById(
         @PathVariable id: Int
-    ): Map<String, Any> {
+    ): UserProfileResponse {
         val user = userDAO.getUser(id).orElseThrow { RuntimeException("User not found") }
         val userGames = userDAO.getAllUserGames(user.id)
         val games = mutableMapOf<String, List<IGDBGame>>()
@@ -73,10 +64,7 @@ class UserController(
             }
             games[listType.name.lowercase()] = gameList
         }
-        return mapOf(
-            "user" to user,
-            "games" to games
-        )
+        return UserProfileResponse(user.toUserDto(), games)
     }
 
     @PostMapping("/{userId}/addGameToList")

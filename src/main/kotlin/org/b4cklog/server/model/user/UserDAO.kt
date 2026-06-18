@@ -5,12 +5,10 @@ import org.b4cklog.server.model.game.GameListType
 import org.b4cklog.server.model.game.GameRepository
 import org.b4cklog.server.util.HashUtils
 import org.springframework.http.HttpStatus
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.server.ResponseStatusException
-import org.b4cklog.server.model.user.FriendRequest
-import org.b4cklog.server.model.user.FriendRequestRepository
-import org.b4cklog.server.model.user.FriendRequestStatus
 
 @Service
 class UserDAO(
@@ -93,43 +91,76 @@ class UserDAO(
         saveUser(user)
     }
 
+    @Transactional
     fun sendFriendRequest(senderId: Int, receiverId: Int) {
-        if (senderId == receiverId) throw IllegalArgumentException("Cannot add yourself as a friend")
-        val sender = getUser(senderId).orElseThrow { RuntimeException("Sender not found") }
-        val receiver = getUser(receiverId).orElseThrow { RuntimeException("Receiver not found") }
-        val existing = friendRequestRepository.findBetweenUsers(senderId, receiverId)
-        if (existing.any { it.status == FriendRequestStatus.PENDING }) {
-            throw RuntimeException("Request already sent")
+        if (senderId == receiverId) {
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot add yourself as a friend")
         }
-        if (existing.any { it.status == FriendRequestStatus.ACCEPTED }) {
-            throw RuntimeException("You are already friends")
+        val sender = getUser(senderId).orElseThrow {
+            ResponseStatusException(HttpStatus.NOT_FOUND, "Sender not found")
         }
-        friendRequestRepository.save(FriendRequest(sender = sender, receiver = receiver))
+        val receiver = getUser(receiverId).orElseThrow {
+            ResponseStatusException(HttpStatus.NOT_FOUND, "Receiver not found")
+        }
+        val pairKey = FriendRequest.pairKey(senderId, receiverId)
+        val existing = friendRequestRepository.findByPairKey(pairKey)
+
+        when (existing?.status) {
+            FriendRequestStatus.PENDING ->
+                throw ResponseStatusException(HttpStatus.CONFLICT, "A pending request already exists")
+            FriendRequestStatus.ACCEPTED ->
+                throw ResponseStatusException(HttpStatus.CONFLICT, "Users are already friends")
+            FriendRequestStatus.REJECTED -> {
+                existing.sender = sender
+                existing.receiver = receiver
+                existing.status = FriendRequestStatus.PENDING
+                friendRequestRepository.save(existing)
+            }
+            null -> try {
+                friendRequestRepository.saveAndFlush(
+                    FriendRequest(sender = sender, receiver = receiver, pairKey = pairKey)
+                )
+            } catch (_: DataIntegrityViolationException) {
+                throw ResponseStatusException(HttpStatus.CONFLICT, "A request between these users already exists")
+            }
+        }
     }
 
+    @Transactional
     fun acceptFriendRequest(requestId: Int, userId: Int) {
-        val request = friendRequestRepository.findById(requestId).orElseThrow { RuntimeException("Request not found") }
-        if (request.receiver.id != userId) throw RuntimeException("No rights to accept")
+        val request = pendingRequest(requestId)
+        if (request.receiver.id != userId) {
+            throw ResponseStatusException(HttpStatus.FORBIDDEN, "No rights to accept this request")
+        }
         request.status = FriendRequestStatus.ACCEPTED
         friendRequestRepository.save(request)
     }
 
+    @Transactional
     fun rejectFriendRequest(requestId: Int, userId: Int) {
-        val request = friendRequestRepository.findById(requestId).orElseThrow { RuntimeException("Request not found") }
-        if (request.receiver.id != userId) throw RuntimeException("No rights to reject")
+        val request = pendingRequest(requestId)
+        if (request.receiver.id != userId) {
+            throw ResponseStatusException(HttpStatus.FORBIDDEN, "No rights to reject this request")
+        }
         request.status = FriendRequestStatus.REJECTED
         friendRequestRepository.save(request)
     }
 
+    @Transactional
     fun cancelFriendRequest(requestId: Int, userId: Int) {
-        val request = friendRequestRepository.findById(requestId).orElseThrow { RuntimeException("Request not found") }
-        if (request.sender.id != userId) throw RuntimeException("No rights to cancel the request")
-        if (request.status != FriendRequestStatus.PENDING) throw RuntimeException("Only pending requests can be cancelled")
+        val request = pendingRequest(requestId)
+        if (request.sender.id != userId) {
+            throw ResponseStatusException(HttpStatus.FORBIDDEN, "No rights to cancel this request")
+        }
         friendRequestRepository.deleteById(requestId)
     }
 
+    @Transactional
     fun removeFriend(userId: Int, friendId: Int) {
         val requests = friendRequestRepository.findBetweenUsers(userId, friendId).filter { it.status == FriendRequestStatus.ACCEPTED }
+        if (requests.isEmpty()) {
+            throw ResponseStatusException(HttpStatus.NOT_FOUND, "Friendship not found")
+        }
         requests.forEach { friendRequestRepository.deleteById(it.id) }
     }
 
@@ -152,4 +183,14 @@ class UserDAO(
     }
 
     fun searchUsers(query: String, currentUserId: Int): List<User> = repository.searchUsers(query, currentUserId)
+
+    private fun pendingRequest(requestId: Int): FriendRequest {
+        val request = friendRequestRepository.findById(requestId).orElseThrow {
+            ResponseStatusException(HttpStatus.NOT_FOUND, "Friend request not found")
+        }
+        if (request.status != FriendRequestStatus.PENDING) {
+            throw ResponseStatusException(HttpStatus.CONFLICT, "Friend request is no longer pending")
+        }
+        return request
+    }
 }

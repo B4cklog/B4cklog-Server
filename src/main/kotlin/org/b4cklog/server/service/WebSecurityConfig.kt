@@ -12,13 +12,7 @@ class WebSecurityConfig {
     fun filterChain(http: HttpSecurity): SecurityFilterChain {
         http
             .csrf { it.disable() }
-            .authorizeRequests()
-            .anyRequest().permitAll()
-//            .authorizeHttpRequests { auth ->
-//                auth
-//                    .requestMatchers(HttpMethod.POST, "/auth/register", "/auth/login").permitAll()
-//                    .anyRequest().authenticated()
-//            }
+            .authorizeHttpRequests { auth -> auth.anyRequest().permitAll() }
         return http.build()
     }
 }
